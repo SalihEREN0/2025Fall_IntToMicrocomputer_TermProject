@@ -1,4 +1,4 @@
-# ESOGU Home Automation System
+# Microcomputer Project — Fall 2025
 
 ## Authors
 **Buğra Ayrancı** — Computer Engineering  
