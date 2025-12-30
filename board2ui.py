@@ -27,13 +27,16 @@ class CurtainControlApp:
         conn_frame = tk.LabelFrame(root, text="Bağlantı", padx=10, pady=10)
         conn_frame.pack(padx=10, pady=10, fill="x")
 
-        tk.Label(conn_frame, text="Port:").grid(row=0, column=0, padx=5)
-        self.port_combo = ttk.Combobox(conn_frame, values=self.get_serial_ports(), width=10)
-        self.port_combo.grid(row=0, column=1, padx=5)
-        if self.port_combo['values']: self.port_combo.current(0)
+        tk.Label(conn_frame, text="COM Port:").grid(row=0, column=0, padx=5)
+        self.port_entry = ttk.Entry(conn_frame, width=10)
+        self.port_entry.insert(0, "COM1")
+        self.port_entry.grid(row=0, column=1, padx=5)
 
         self.btn_connect = tk.Button(conn_frame, text="BAĞLAN", command=self.toggle_connection, bg="#27ae60", fg="white", width=12)
         self.btn_connect.grid(row=0, column=2, padx=10)
+        
+        self.lbl_status = tk.Label(conn_frame, text="Durum: Bağlı Değil", fg="red")
+        self.lbl_status.grid(row=1, column=0, columnspan=3, pady=5)
 
         # Manuel Kontrol
         ctrl_frame = tk.LabelFrame(root, text="Manuel Kontrol", padx=10, pady=10)
@@ -66,16 +69,15 @@ class CurtainControlApp:
         self.log_text.insert(tk.END, msg + "\n")
         self.log_text.see(tk.END)
 
-    def get_serial_ports(self):
-        return [port.device for port in serial.tools.list_ports.comports()]
-
     def toggle_connection(self):
         if self.is_connected: self.disconnect()
         else: self.connect()
 
     def connect(self):
-        port = self.port_combo.get()
-        if not port: return
+        port = self.port_entry.get()
+        if not port: 
+            messagebox.showerror("Hata", "Lütfen COM port girin!")
+            return
         try:
             # V43/V44 PIC kodları için en kararlı ayarlar
             self.ser = serial.Serial(port, 9600, timeout=0.5)
@@ -83,14 +85,17 @@ class CurtainControlApp:
             self.ser.rts = False
             self.is_connected = True
             self.btn_connect.config(text="KES", bg="#c0392b")
+            self.lbl_status.config(text=f"Durum: Bağlı ({port})", fg="green")
             self.log(f"Bağlandı: {port}")
         except Exception as e:
+            messagebox.showerror("Hata", f"{port} açılamadı!\n{e}")
             self.log(f"Hata: {e}")
 
     def disconnect(self):
         if self.ser: self.ser.close()
         self.is_connected = False
         self.btn_connect.config(text="BAĞLAN", bg="#27ae60")
+        self.lbl_status.config(text="Durum: Bağlı Değil", fg="red")
 
     def send_curtain_command(self):
         if not self.is_connected: return
